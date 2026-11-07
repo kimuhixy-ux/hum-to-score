@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17181b" media="(prefers-color-scheme: dark)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ハミング採譜">
+  <title>ハミング採譜</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>ハミング採譜</h1>
+      <p class="lead">口ずさんだメロディーをサックスの楽譜にします。</p>
+    </header>
+
+    <section class="card settings">
+      <label class="field">
+        <span>テンポ <output id="tempo-value">100</output></span>
+        <input id="tempo" type="range" min="50" max="220" step="2" value="100">
+      </label>
+      <label class="field">
+        <span>小節数</span>
+        <select id="bars">
+          <option value="2">2小節</option>
+          <option value="4" selected>4小節</option>
+          <option value="8">8小節</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>楽器</span>
+        <select id="instrument">
+          <option value="alto" selected>アルトサックス(E♭)</option>
+          <option value="tenor">テナーサックス(B♭)</option>
+          <option value="concert">実音(C)</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="recorder">
+      <button id="record" class="record-button" type="button">録音</button>
+      <p id="status" class="status" aria-live="polite">4拍のカウントのあとに歌ってください。イヤホンを使うとメトロノームの音を拾いにくくなります。</p>
+    </section>
+
+    <section id="result" class="card result" hidden>
+      <div id="score" class="score-box"></div>
+      <div class="actions">
+        <button id="play" type="button" class="wide">再生</button>
+        <button id="octave-down" type="button">オクターブ↓</button>
+        <button id="octave-up" type="button">オクターブ↑</button>
+        <button id="save" type="button" class="wide primary">MusicXMLで保存</button>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

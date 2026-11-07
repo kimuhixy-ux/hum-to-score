@@ -1,0 +1,193 @@
+:root {
+  --bg: #f6f4ef;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --muted: #66666b;
+  --line: #d9d6cf;
+  --accent: #b5562b;
+  --accent-text: #ffffff;
+  --recording: #c62828;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17181b;
+    --card: #222428;
+    --text: #ececec;
+    --muted: #a0a0a6;
+    --line: #3a3d43;
+    --accent: #e08a5c;
+    --accent-text: #17181b;
+    --recording: #ef5350;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+    calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.lead {
+  margin: 4px 0 16px;
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.field:last-child {
+  margin-bottom: 0;
+}
+
+input[type='range'] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--accent);
+}
+
+select,
+button {
+  min-height: 44px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
+.recorder {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.record-button {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.record-button.is-recording {
+  background: var(--recording);
+}
+
+.status {
+  min-height: 3.2em;
+  margin: 12px 0 0;
+  color: var(--muted);
+}
+
+.score-box {
+  color: var(--text);
+}
+
+.score {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.score .staff-line,
+.score .bar-line,
+.score .stem {
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.score .stem {
+  stroke-width: 1.3;
+}
+
+.score .ink {
+  fill: currentColor;
+}
+
+.score .head-hollow {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.score .flag {
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.score .rest-stroke,
+.score .tie {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.score .tie {
+  stroke-width: 1.3;
+}
+
+.score .clef {
+  fill: currentColor;
+  font-size: 66px;
+}
+
+.score .accidental {
+  fill: currentColor;
+  font-size: 15px;
+  text-anchor: middle;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions .wide {
+  grid-column: 1 / -1;
+}
+
+.actions .primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  font-weight: bold;
+}
