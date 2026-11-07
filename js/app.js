@@ -4,7 +4,8 @@ import { renderScore } from './score-view.js';
 import { buildMusicXml } from './musicxml.js';
 import { createAudioContext, scheduleClicks, playNotes } from './audio.js';
 
-const COUNT_IN_BEATS = 4;
+// 1小節目はテンポを聞くだけ、2小節目で数えてから歌い始める。
+const COUNT_IN_BEATS = 8;
 // 録音の最後の音が切れないよう、指定の小節が終わってから少し待って止める。
 const TAIL_SEC = 0.4;
 const WIDE_SCREEN = 640;
@@ -55,9 +56,11 @@ function showBeats(ctx, startTime, settings) {
   const timers = [];
   for (let i = 0; i < totalBeats; i++) {
     const delay = (startTime + i * secPerBeat - ctx.currentTime) * 1000;
-    const label = i < COUNT_IN_BEATS
-      ? `カウント ${i + 1}`
-      : `歌ってください　${Math.floor((i - COUNT_IN_BEATS) / 4) + 1} / ${settings.bars} 小節`;
+    const label = i < 4
+      ? `テンポを聞いてください　${i + 1}`
+      : i < COUNT_IN_BEATS
+        ? `カウント ${i - 3}`
+        : `歌ってください　${Math.floor((i - COUNT_IN_BEATS) / 4) + 1} / ${settings.bars} 小節`;
     timers.push(setTimeout(() => setStatus(label), Math.max(0, delay)));
   }
   return timers;
