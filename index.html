@@ -48,6 +48,15 @@
       <p id="status" class="status" aria-live="polite">1小節テンポを聞き、次の1小節のカウントのあとに歌ってください。イヤホンを使うとメトロノームの音を拾いにくくなります。</p>
     </section>
 
+    <section class="card file-import">
+      <p class="file-note">音源分離で取り出したメロディーの音声も楽譜にできます。テンポは曲に合わせてください。</p>
+      <label class="field">
+        <span>1小節目が始まる位置(秒)</span>
+        <input id="file-start" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+      </label>
+      <label class="file-button">音声ファイルから採譜<input id="audio-file" type="file" accept="audio/*"></label>
+    </section>
+
     <section id="result" class="card result" hidden>
       <div id="score" class="score-box"></div>
       <div class="editor">

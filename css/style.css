@@ -107,6 +107,41 @@ button {
   background: var(--recording);
 }
 
+.file-note {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+input[type='number'] {
+  min-height: 44px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+}
+
+/* 標準のファイル選択は小さく押しにくいので、隠してラベル全体をボタンにする。 */
+.file-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 .status {
   min-height: 3.2em;
   margin: 12px 0 0;

@@ -123,6 +123,44 @@ function finishRecording() {
   setTimeout(() => analyzeTake(samples, sampleRate, (bar1Time * sampleRate - firstFrame) / sampleRate, settings), 50);
 }
 
+// 左右の音を平均して1本にする。音の高さを測るだけなら左右の違いは要らないため。
+function toMono(buffer) {
+  const mono = new Float32Array(buffer.length);
+  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < data.length; i++) mono[i] += data[i] / buffer.numberOfChannels;
+  }
+  return mono;
+}
+
+async function importAudioFile(file) {
+  if (!file || recording) return;
+  const settings = readSettings();
+  setStatus('ファイルを読み込んでいます…');
+  const ctx = new AudioContext();
+  let buffer;
+  try {
+    buffer = await ctx.decodeAudioData(await file.arrayBuffer());
+  } catch (error) {
+    setStatus('このファイルは読み込めませんでした。wav・m4a・mp3 を試してください。');
+    return;
+  } finally {
+    ctx.close();
+  }
+  const startSec = Math.max(0, Number($('file-start').value) || 0);
+  if (startSec >= buffer.duration) {
+    setStatus(`1小節目の位置が曲の長さ(${buffer.duration.toFixed(1)}秒)を超えています。`);
+    return;
+  }
+  // 指定の小節ぶんだけ切り出す。長い曲を丸ごと解析すると iPhone で時間がかかりすぎるため。
+  const rate = buffer.sampleRate;
+  const lengthSec = settings.bars * 4 * (60 / settings.bpm) + TAIL_SEC;
+  const from = Math.floor(startSec * rate);
+  const samples = toMono(buffer).slice(from, from + Math.floor(lengthSec * rate));
+  setStatus('音符に直しています…');
+  setTimeout(() => analyzeTake(samples, rate, 0, settings), 50);
+}
+
 function analyzeTake(samples, sampleRate, beat0, settings) {
   const { notes } = extractNotes(samples, sampleRate);
   const placed = quantizeNotes(notes, { beat0, secPerBeat: 60 / settings.bpm, totalBeats: settings.bars * 4 });
@@ -256,6 +294,11 @@ $('retake').addEventListener('click', () => {
   startRecording();
 });
 $('save').addEventListener('click', saveMusicXml);
+$('audio-file').addEventListener('change', (event) => {
+  importAudioFile(event.target.files[0]);
+  // 同じファイルを位置やテンポを変えて読み直せるように、選択を空に戻す。
+  event.target.value = '';
+});
 $('prev-note').addEventListener('click', () => moveSelection(-1));
 $('next-note').addEventListener('click', () => moveSelection(1));
 $('pitch-down').addEventListener('click', () => editSelected('down'));
