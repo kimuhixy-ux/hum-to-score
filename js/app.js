@@ -208,6 +208,13 @@ instrumentSelect.addEventListener('change', () => {
 $('octave-down').addEventListener('click', () => shiftOctave(-1));
 $('octave-up').addEventListener('click', () => shiftOctave(1));
 playButton.addEventListener('click', togglePlayback);
+$('retake').addEventListener('click', () => {
+  if (recording) return;
+  stopPlayback();
+  // 楽譜の下で押しても、カウントと進み具合の表示が見える位置へ戻す。
+  recordButton.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  startRecording();
+});
 $('save').addEventListener('click', saveMusicXml);
 
 if ('serviceWorker' in navigator) {
