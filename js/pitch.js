@@ -16,6 +16,12 @@ const SILENCE_FLOOR = 0.003;
 const HOLD_RANGE = 0.7;
 // これより短い区間は、しゃくりや音の移り変わりの途中とみなして捨てる。
 const MIN_SEGMENT_SEC = 0.05;
+// 伸ばしている音の途中で、これ以内だけ別の高さを拾っても同じ音が続いているとみなす。
+// 伴奏の漏れや判定ミスで、1つの長い音が細切れになるのを防ぐ。
+const MAX_BLIP_SEC = 0.15;
+// 1オクターブ以上離れた高さへ跳んですぐ戻ることは旋律ではまずないので、伴奏の漏れとみなしてもう少し長くても埋める。
+const MAX_LEAP_BLIP_SEC = 0.25;
+const LEAP = 12;
 
 export function downsample(samples, factor) {
   const out = new Float32Array(Math.floor(samples.length / factor));
@@ -85,7 +91,7 @@ export function analyzeFrames(samples, sampleRate) {
     hopSec: HOP_SIZE / rate,
     frames: frames.map(({ frame, time, level }) => {
       const freq = level < silence ? null : detectPitchYin(frame, rate);
-      return { time, midi: freq ? freqToMidi(freq) : null };
+      return { time, midi: freq ? freqToMidi(freq) : null, silent: level < silence };
     })
   };
 }
@@ -104,6 +110,30 @@ export function medianSmooth(frames) {
       .filter((m) => m !== null);
     return { ...f, midi: median(around) };
   });
+}
+
+function isHolding(frame, anchor) {
+  return frame.midi !== null && Math.abs(frame.midi - anchor) < HOLD_RANGE;
+}
+
+// 一瞬だけ別の高さを拾ってすぐ元に戻った箇所を、前後の音で埋める。
+// 無音をはさむ場合は同じ音の吹き直し(連打)なので埋めない。
+export function bridgeBlips(frames, hopSec) {
+  const shortFrames = Math.round(MAX_BLIP_SEC / hopSec);
+  const leapFrames = Math.round(MAX_LEAP_BLIP_SEC / hopSec);
+  const out = frames.map((f) => ({ ...f }));
+  for (let i = 1; i < out.length; i++) {
+    const anchor = out[i - 1].midi;
+    if (anchor === null || out[i].silent || isHolding(out[i], anchor)) continue;
+    let j = i;
+    while (j < out.length && j - i <= leapFrames && !out[j].silent && !isHolding(out[j], anchor)) j++;
+    if (j >= out.length || j - i > leapFrames || !isHolding(out[j], anchor)) continue;
+    const isLeap = out.slice(i, j).every((f) => f.midi === null || Math.abs(f.midi - anchor) >= LEAP);
+    if (j - i <= shortFrames || isLeap) {
+      for (let k = i; k < j; k++) out[k].midi = anchor;
+    }
+  }
+  return out;
 }
 
 // 歌い手の音感が全体に少し高い/低いずれを推定する。
@@ -157,7 +187,7 @@ function mergeSamePitch(notes, hopSec) {
 
 export function extractNotes(samples, sampleRate) {
   const { frames, hopSec } = analyzeFrames(samples, sampleRate);
-  const smoothed = medianSmooth(frames);
+  const smoothed = bridgeBlips(medianSmooth(frames), hopSec);
   const offset = estimateTuningOffset(smoothed);
   return { notes: segmentNotes(smoothed, offset, hopSec), tuningOffset: offset };
 }

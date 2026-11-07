@@ -1,5 +1,5 @@
 // データやコードを更新したら必ずこの番号を上げる。上げ忘れると端末に古い版が残る。
-const CACHE_NAME = 'hum-to-score-v6';
+const CACHE_NAME = 'hum-to-score-v7';
 const ASSETS = [
   './',
   './index.html',
