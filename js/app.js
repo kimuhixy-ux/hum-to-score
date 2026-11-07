@@ -1,5 +1,5 @@
 import { extractNotes } from './pitch.js';
-import { INSTRUMENTS, quantizeNotes, buildEvents, autoOctaveShift, toWrittenNotes } from './score.js';
+import { INSTRUMENTS, quantizeNotes, buildEvents, autoOctaveShift, toWrittenNotes, editPlacedNote } from './score.js';
 import { renderScore } from './score-view.js';
 import { buildMusicXml } from './musicxml.js';
 import { createAudioContext, scheduleClicks, playNotes } from './audio.js';
@@ -8,6 +8,8 @@ const COUNT_IN_BEATS = 4;
 // 録音の最後の音が切れないよう、指定の小節が終わってから少し待って止める。
 const TAIL_SEC = 0.4;
 const WIDE_SCREEN = 640;
+const DURATION_NAMES = { 0.5: '8分音符', 1: '4分音符', 1.5: '付点4分音符', 2: '2分音符', 3: '付点2分音符', 4: '全音符' };
+const ACCIDENTAL_MARKS = { 1: '♯', '-1': '♭', 0: '' };
 
 const $ = (id) => document.getElementById(id);
 const tempoInput = $('tempo');
@@ -125,7 +127,7 @@ function analyzeTake(samples, sampleRate, beat0, settings) {
     setStatus('音が聞き取れませんでした。もう少し大きな声で、マイクの近くで歌ってみてください。');
     return;
   }
-  take = { placed, bpm: settings.bpm, bars: settings.bars, recordedAt: new Date() };
+  take = { placed, bpm: settings.bpm, bars: settings.bars, recordedAt: new Date(), selected: 0 };
   take.octaveShift = autoOctaveShift(placed, instrumentSelect.value);
   setStatus(`${placed.length}個の音符になりました。`);
   showResult();
@@ -136,9 +138,44 @@ function showResult() {
   stopPlayback();
   const events = buildEvents(take.placed, take.bars * 4);
   result = toWrittenNotes(events, instrumentSelect.value, take.octaveShift);
-  const barsPerRow = scoreBox.clientWidth >= WIDE_SCREEN ? 4 : 2;
-  renderScore(scoreBox, result, take.bars, barsPerRow);
+  // 隠れたままだと幅が0と測られるので、先に表示してから1行の小節数を決める。
   resultSection.hidden = false;
+  const barsPerRow = Math.min(take.bars, scoreBox.clientWidth >= WIDE_SCREEN ? 4 : 2);
+  renderScore(scoreBox, result, take.bars, barsPerRow, { selected: take.selected, onSelect: selectNote });
+  updateEditorLabel();
+}
+
+function updateEditorLabel() {
+  const written = result.find((n) => !n.rest && n.source === take.selected);
+  if (!written) {
+    $('selected-note').textContent = 'なし';
+    return;
+  }
+  const note = take.placed[take.selected];
+  const length = note.end - note.start;
+  const name = `${written.letter}${ACCIDENTAL_MARKS[written.accidental]}${written.octave}`;
+  $('selected-note').textContent = `${name}・${DURATION_NAMES[length] || `${length}拍`}`;
+}
+
+function selectNote(index) {
+  take.selected = index;
+  showResult();
+}
+
+function moveSelection(step) {
+  if (!take || take.placed.length === 0) return;
+  const current = take.selected ?? 0;
+  take.selected = Math.min(take.placed.length - 1, Math.max(0, current + step));
+  showResult();
+}
+
+function editSelected(action) {
+  if (!take || take.selected === null || !take.placed[take.selected]) return;
+  take.placed = editPlacedNote(take.placed, take.selected, action, take.bars * 4);
+  if (action === 'delete') {
+    take.selected = take.placed.length ? Math.min(take.selected, take.placed.length - 1) : null;
+  }
+  showResult();
 }
 
 function shiftOctave(direction) {
@@ -216,6 +253,13 @@ $('retake').addEventListener('click', () => {
   startRecording();
 });
 $('save').addEventListener('click', saveMusicXml);
+$('prev-note').addEventListener('click', () => moveSelection(-1));
+$('next-note').addEventListener('click', () => moveSelection(1));
+$('pitch-down').addEventListener('click', () => editSelected('down'));
+$('pitch-up').addEventListener('click', () => editSelected('up'));
+$('shorter').addEventListener('click', () => editSelected('shorter'));
+$('longer').addEventListener('click', () => editSelected('longer'));
+$('delete-note').addEventListener('click', () => editSelected('delete'));
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');

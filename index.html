@@ -50,6 +50,18 @@
 
     <section id="result" class="card result" hidden>
       <div id="score" class="score-box"></div>
+      <div class="editor">
+        <p class="editor-label">選んだ音: <strong id="selected-note">なし</strong>（音符をタップしても選べます）</p>
+        <div class="actions">
+          <button id="prev-note" type="button">◀ 前の音</button>
+          <button id="next-note" type="button">次の音 ▶</button>
+          <button id="pitch-down" type="button">半音↓</button>
+          <button id="pitch-up" type="button">半音↑</button>
+          <button id="shorter" type="button">短く</button>
+          <button id="longer" type="button">長く</button>
+          <button id="delete-note" type="button" class="wide">この音を消す</button>
+        </div>
+      </div>
       <div class="actions">
         <button id="play" type="button">再生</button>
         <button id="retake" type="button">録り直す</button>

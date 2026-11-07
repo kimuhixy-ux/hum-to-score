@@ -174,6 +174,29 @@ button {
   text-anchor: middle;
 }
 
+.score .hit {
+  fill: transparent;
+}
+
+.score .is-selected {
+  color: var(--accent);
+}
+
+.editor {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.editor-label {
+  margin: 0;
+  color: var(--muted);
+}
+
+.editor-label strong {
+  color: var(--text);
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

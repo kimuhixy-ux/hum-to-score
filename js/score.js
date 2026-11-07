@@ -71,7 +71,7 @@ function splitInBar(pos, length) {
   return pieces;
 }
 
-function pushSpan(events, start, length, midi) {
+function pushSpan(events, start, length, midi, source) {
   let pos = start;
   const end = start + length;
   let first = true;
@@ -80,7 +80,7 @@ function pushSpan(events, start, length, midi) {
     const inBar = pos - barIndex * BEATS_PER_BAR;
     const room = Math.min(end - pos, BEATS_PER_BAR - inBar);
     for (const { at, value } of splitInBar(inBar, room)) {
-      events.push({ barIndex, beatInBar: at, duration: value, midi, tied: midi !== null && !first });
+      events.push({ barIndex, beatInBar: at, duration: value, midi, tied: midi !== null && !first, source });
       first = false;
     }
     pos += room;
@@ -90,12 +90,12 @@ function pushSpan(events, start, length, midi) {
 export function buildEvents(placed, totalBeats) {
   const events = [];
   let pos = 0;
-  for (const note of placed) {
-    if (note.start > pos) pushSpan(events, pos, note.start - pos, null);
-    pushSpan(events, note.start, note.end - note.start, note.midi);
+  placed.forEach((note, index) => {
+    if (note.start > pos) pushSpan(events, pos, note.start - pos, null, null);
+    pushSpan(events, note.start, note.end - note.start, note.midi, index);
     pos = note.end;
-  }
-  if (pos < totalBeats) pushSpan(events, pos, totalBeats - pos, null);
+  });
+  if (pos < totalBeats) pushSpan(events, pos, totalBeats - pos, null, null);
   return events;
 }
 
@@ -147,11 +147,24 @@ function markAccidentals(notes) {
 export function toWrittenNotes(events, instrumentKey, octaveShift) {
   const { transpose } = INSTRUMENTS[instrumentKey];
   const notes = events.map((e) => {
-    const base = { barIndex: e.barIndex, beatInBar: e.beatInBar, duration: e.duration };
+    const base = { barIndex: e.barIndex, beatInBar: e.beatInBar, duration: e.duration, source: e.source };
     if (e.midi === null) return { ...base, rest: true };
     const midi = e.midi + transpose + octaveShift * 12;
     return { ...base, midi, ...spellMidi(midi), tied: e.tied };
   });
   markAccidentals(notes);
+  return notes;
+}
+
+// 選んだ音を1つ編集した新しい並びを返す。長さは後ろの音と重ならない範囲でだけ伸ばす。
+export function editPlacedNote(placed, index, action, totalBeats) {
+  const notes = placed.map((n) => ({ ...n }));
+  const note = notes[index];
+  const limit = index + 1 < notes.length ? notes[index + 1].start : totalBeats;
+  if (action === 'up') note.midi += 1;
+  if (action === 'down') note.midi -= 1;
+  if (action === 'longer' && note.end + GRID <= limit) note.end += GRID;
+  if (action === 'shorter' && note.end - GRID > note.start) note.end -= GRID;
+  if (action === 'delete') notes.splice(index, 1);
   return notes;
 }

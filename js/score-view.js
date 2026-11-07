@@ -109,7 +109,19 @@ function drawTie(svg, from, to) {
   }));
 }
 
-export function renderScore(container, notes, totalBars, barsPerRow) {
+// 音符ごとにグループにまとめ、透明な当たり判定を重ねる。細い符頭だけだと指でタップしにくいため。
+function drawSelectableNote(svg, note, x, row, { selected, onSelect }) {
+  const group = el('g', { class: note.source === selected ? 'note is-selected' : 'note' });
+  group.append(el('rect', {
+    x: x - 12, y: bottomY(row) - 85, width: Math.max(24, note.duration * BEAT_WIDTH), height: 120, class: 'hit'
+  }));
+  const drawn = drawNote(group, note, x, row);
+  group.addEventListener('click', () => onSelect(note.source));
+  svg.append(group);
+  return drawn;
+}
+
+export function renderScore(container, notes, totalBars, barsPerRow, selection) {
   const rows = Math.ceil(totalBars / barsPerRow);
   const width = CLEF_WIDTH + barsPerRow * BAR_WIDTH + 6;
   const svg = el('svg', { viewBox: `0 0 ${width} ${rows * ROW_HEIGHT}`, class: 'score', role: 'img', 'aria-label': '採譜した楽譜' });
@@ -126,7 +138,7 @@ export function renderScore(container, notes, totalBars, barsPerRow) {
       prev = null;
       continue;
     }
-    const drawn = drawNote(svg, note, x, row);
+    const drawn = drawSelectableNote(svg, note, x, row, selection);
     if (note.tied && prev) drawTie(svg, prev, prev.row === row ? drawn : { ...drawn, x: prev.x + 24 });
     prev = { ...drawn, row };
   }
