@@ -28,9 +28,11 @@ function snap(beats) {
 
 export function quantizeNotes(rawNotes, { beat0, secPerBeat, totalBeats }) {
   const minSec = GRID * secPerBeat * MIN_NOTE_RATIO;
+  // カウント中から出ていた声は捨てる。ただし少し早めの歌い出しは1拍目の音として残す。
+  const earliest = beat0 - (GRID * secPerBeat) / 2;
   const placed = [];
   for (const raw of rawNotes) {
-    if (raw.end - raw.start < minSec || raw.end <= beat0) continue;
+    if (raw.end - raw.start < minSec || raw.start < earliest) continue;
     const start = Math.max(0, snap((raw.start - beat0) / secPerBeat));
     if (start >= totalBeats) continue;
     const end = Math.min(totalBeats, Math.max(start + GRID, snap((raw.end - beat0) / secPerBeat)));
