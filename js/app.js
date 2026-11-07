@@ -1,5 +1,5 @@
 import { extractNotes } from './pitch.js';
-import { INSTRUMENTS, quantizeNotes, buildEvents, autoOctaveShift, toWrittenNotes, editPlacedNote } from './score.js';
+import { INSTRUMENTS, quantizeNotes, buildEvents, autoOctaveShift, toWrittenNotes, editPlacedNote, dropBelowRange } from './score.js';
 import { renderScore } from './score-view.js';
 import { buildMusicXml } from './musicxml.js';
 import { createAudioContext, scheduleClicks, playNotes } from './audio.js';
@@ -158,11 +158,13 @@ async function importAudioFile(file) {
   const from = Math.floor(startSec * rate);
   const samples = toMono(buffer).slice(from, from + Math.floor(lengthSec * rate));
   setStatus('音符に直しています…');
-  setTimeout(() => analyzeTake(samples, rate, 0, settings), 50);
+  setTimeout(() => analyzeTake(samples, rate, 0, settings, true), 50);
 }
 
-function analyzeTake(samples, sampleRate, beat0, settings) {
-  const { notes } = extractNotes(samples, sampleRate);
+function analyzeTake(samples, sampleRate, beat0, settings, fromFile = false) {
+  const extracted = extractNotes(samples, sampleRate).notes;
+  // 鼻歌には伴奏の漏れがなく、低い声まで消すと困るので、ファイルのときだけ捨てる。
+  const notes = fromFile ? dropBelowRange(extracted, settings.instrumentKey) : extracted;
   const placed = quantizeNotes(notes, { beat0, secPerBeat: 60 / settings.bpm, totalBeats: settings.bars * 4 });
   if (placed.length === 0) {
     setStatus('音が聞き取れませんでした。もう少し大きな声で、マイクの近くで歌ってみてください。');

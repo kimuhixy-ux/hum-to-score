@@ -22,6 +22,12 @@ export const INSTRUMENTS = {
   concert: { label: '実音(C)', partName: 'Voice', transpose: 0, low: 55, high: 84, xmlTranspose: null }
 };
 
+// 音源分離で残ったピアノやベースの低音は、その楽器では出せない高さなので捨てる。
+export function dropBelowRange(notes, instrumentKey) {
+  const { transpose, low } = INSTRUMENTS[instrumentKey];
+  return notes.filter((n) => n.midi + transpose >= low);
+}
+
 function snap(beats) {
   return Math.round(beats / GRID) * GRID;
 }
